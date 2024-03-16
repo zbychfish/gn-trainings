@@ -12,7 +12,7 @@ spec:
       ensureDb2InstallPlacement: true
     dev: "false"
     licenseAccept: true
-    size: small
+    size: values-xsmall
     insights:
       ingress:
         hostName: insights.apps.ocp.test.priv
