@@ -12,7 +12,7 @@ spec:
       ensureDb2InstallPlacement: true
     dev: "false"
     licenseAccept: true
-    size: values-xsmall
+    size: values-small
     insights:
       ingress:
         hostName: insights.apps.ocp.test.priv
@@ -127,7 +127,7 @@ spec:
             requests:
               storage: 50Gi
       partitionConfig:
-        total: 2
+        total: 1
       instance:
         registry:
           DB2_4K_DEVICE_SUPPORT: "ON"
