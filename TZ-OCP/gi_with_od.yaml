@@ -1,0 +1,149 @@
+apiVersion: gi.ds.isc.ibm.com/v1
+kind: GuardiumInsights
+metadata:
+  name: <gi_namespace>
+spec:
+  version: <gi_version>
+  license:
+    accept: true
+    licenseType: "L-TFWF-ZZ5233"
+  guardiumInsightsGlobal:
+    deploySettings:
+      ensureDb2InstallPlacement: true
+    dev: "false"
+    licenseAccept: true
+    size: values-xsmall
+    insights:
+      ingress:
+        hostName: insights.apps.ocp.test.priv
+        domainName: apps.ocp.test.priv
+      ics:
+        namespace: ibm-common-services
+        registry: common-service
+    storageClassName: "rook-cephfs"
+    backupsupport:
+      enabled: "false"
+  dependency-s3:
+    storageClassName: "rook-ceph-block"
+    noobaa:
+      backingstore:
+        resources:
+          requests:
+            storage: 50Gi
+      dbConfig:
+        volumeResources:
+          requests:
+            storage: 20Gi
+  dependency-kafka:
+    kafka:
+      storage:
+        class: "rook-ceph-block"
+        size: 50Gi
+    zookeeper:
+      storage:
+        class: "rook-ceph-block"
+        size: 5Gi
+  dependency-postgres:
+    postgres:
+      storage:
+        size: 5Gi
+        storageClassName: "rook-ceph-block"
+  dependency-redis:
+    size: 3
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: "rook-ceph-block"
+  dependency-mongodb:
+    storage:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: "rook-ceph-block"
+    - metadata:
+        name: logs-volume
+      spec:
+        accessModes:
+        - ReadWriteMany
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: "rook-cephfs"
+  dependency-db2:
+    db2instance:
+      installAsDefault: true
+      dbConfig:
+        LOGARCHMETH1: "DISK:/mnt/logs/archive"
+      nodes: 1
+      resources:
+        requests:
+          cpu: "6"
+          memory: "48Gi"
+        limits:
+          cpu: "6"
+          memory: "48Gi"
+      dbSettings:
+        encrypt: "YES"
+      storage:
+      - name: archivelogs
+        type: create
+        spec:
+          storageClassName: "rook-cephfs"
+          accessModes:
+          - ReadWriteMany
+          resources:
+            requests:
+              storage: 50Gi
+      - name: meta
+        type: create
+        spec:
+          storageClassName: "rook-cephfs"
+          accessModes:
+          - ReadWriteMany
+          resources:
+            requests:
+              storage: 30Gi
+      - name: data
+        type: template
+        spec:
+          storageClassName: "rook-ceph-block"
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 200Gi
+      - name: tempts
+        type: template
+        spec:
+          storageClassName: "rook-ceph-block"
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+      partitionConfig:
+        total: 1
+      instance:
+        registry:
+          DB2_4K_DEVICE_SUPPORT: "ON"
+  mini-snif:
+    persistentVolumesClaims:
+      mini-snif-shared:
+        storageClassName: "rook-cephfs"
+  universal-connector-manager:
+    persistentVolumesClaims:
+      universal-connector-manager-shared:
+        storageClassName: "rook-cephfs"
+  settings-datasources:
+    persistentVolumesClaims:
+      settings-datasources:
+        storageClassName: "rook-cephfs"
+  ticketing:
+    persistentVolumesClaims:
+      ticketing-keystore:
+        storageClassName: "rook-cephfs"
