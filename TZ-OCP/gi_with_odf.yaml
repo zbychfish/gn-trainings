@@ -20,11 +20,11 @@ spec:
       ics:
         namespace: ibm-common-services
         registry: common-service
-    storageClassName: "rook-cephfs"
+    storageClassName: "ocs-storagecluster-cephfs"
     backupsupport:
       enabled: "false"
   dependency-s3:
-    storageClassName: "rook-ceph-block"
+    storageClassName: "ocs-storagecluster-ceph-rbd"
     noobaa:
       backingstore:
         resources:
@@ -37,23 +37,23 @@ spec:
   dependency-kafka:
     kafka:
       storage:
-        class: "rook-ceph-block"
+        class: "ocs-storagecluster-ceph-rbd"
         size: 50Gi
     zookeeper:
       storage:
-        class: "rook-ceph-block"
+        class: "ocs-storagecluster-ceph-rbd"
         size: 5Gi
   dependency-postgres:
     postgres:
       storage:
         size: 5Gi
-        storageClassName: "rook-ceph-block"
+        storageClassName: "ocs-storagecluster-ceph-rbd"
   dependency-redis:
     size: 3
     persistence:
       enabled: true
       size: 5Gi
-      storageClass: "rook-ceph-block"
+      storageClass: "ocs-storagecluster-ceph-rbd"
   dependency-mongodb:
     storage:
     - metadata:
@@ -64,7 +64,7 @@ spec:
         resources:
           requests:
             storage: 50Gi
-        storageClassName: "rook-ceph-block"
+        storageClassName: "ocs-storagecluster-ceph-rbd"
     - metadata:
         name: logs-volume
       spec:
@@ -73,7 +73,7 @@ spec:
         resources:
           requests:
             storage: 10Gi
-        storageClassName: "rook-cephfs"
+        storageClassName: "ocs-storagecluster-cephfs"
   dependency-db2:
     db2instance:
       installAsDefault: true
@@ -93,7 +93,7 @@ spec:
       - name: archivelogs
         type: create
         spec:
-          storageClassName: "rook-cephfs"
+          storageClassName: "ocs-storagecluster-cephfs"
           accessModes:
           - ReadWriteMany
           resources:
@@ -102,7 +102,7 @@ spec:
       - name: meta
         type: create
         spec:
-          storageClassName: "rook-cephfs"
+          storageClassName: "ocs-storagecluster-cephfs"
           accessModes:
           - ReadWriteMany
           resources:
@@ -111,7 +111,7 @@ spec:
       - name: data
         type: template
         spec:
-          storageClassName: "rook-ceph-block"
+          storageClassName: "ocs-storagecluster-ceph-rbd"
           accessModes:
           - ReadWriteOnce
           resources:
@@ -120,7 +120,7 @@ spec:
       - name: tempts
         type: template
         spec:
-          storageClassName: "rook-ceph-block"
+          storageClassName: "ocs-storagecluster-ceph-rbd"
           accessModes:
           - ReadWriteOnce
           resources:
@@ -134,16 +134,16 @@ spec:
   mini-snif:
     persistentVolumesClaims:
       mini-snif-shared:
-        storageClassName: "rook-cephfs"
+        storageClassName: "ocs-storagecluster-cephfs"
   universal-connector-manager:
     persistentVolumesClaims:
       universal-connector-manager-shared:
-        storageClassName: "rook-cephfs"
+        storageClassName: "ocs-storagecluster-cephfs"
   settings-datasources:
     persistentVolumesClaims:
       settings-datasources:
-        storageClassName: "rook-cephfs"
+        storageClassName: "ocs-storagecluster-cephfs"
   ticketing:
     persistentVolumesClaims:
       ticketing-keystore:
-        storageClassName: "rook-cephfs"
+        storageClassName: "ocs-storagecluster-cephfs"
