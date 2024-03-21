@@ -15,8 +15,8 @@ spec:
     size: values-xsmall
     insights:
       ingress:
-        hostName: insights.apps.ocp.test.priv
-        domainName: apps.ocp.test.priv
+        hostName: insights.apps.<your_env_subdomain>
+        domainName: apps.<your_env_subdomain>
       ics:
         namespace: ibm-common-services
         registry: common-service
