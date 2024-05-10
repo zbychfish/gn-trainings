@@ -1,0 +1,12 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: backup-nfs-pvc
+  namespace: <gi_namespace>
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: <size of backup volume>Gi
+  storageClassName: nfs-client

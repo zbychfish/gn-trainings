@@ -1,0 +1,160 @@
+apiVersion: gi.ds.isc.ibm.com/v1
+kind: GuardiumInsights
+metadata:
+  name: <gi_namespace>
+spec:
+  version: <gi_version>
+  license:
+    accept: true
+    licenseType: "L-TFWF-ZZ5233"
+  guardiumInsightsGlobal:
+    deploySettings:
+      ensureDb2InstallPlacement: true
+    dev: "false"
+    licenseAccept: true
+    size: values-xsmall
+    insights:
+      ingress:
+        hostName: insights.apps.<your_env_subdomain>
+        domainName: apps.<your_env_subdomain>
+      ics:
+        namespace: ibm-common-services
+        registry: common-service
+    storageClassName: "ocs-storagecluster-cephfs"
+    backupsupport:
+      enabled: "true"
+      name: "backup-nfs-pvc"
+      size: 100Gi
+      storageClassName: nfs-client
+  dependency-s3:
+    storageClassName: "ocs-storagecluster-ceph-rbd"
+    noobaa:
+      backingstore:
+        resources:
+          requests:
+            storage: 50Gi
+      dbConfig:
+        volumeResources:
+          requests:
+            storage: 20Gi
+  dependency-kafka:
+    kafka:
+      storage:
+        class: "ocs-storagecluster-ceph-rbd"
+        size: 50Gi
+    zookeeper:
+      storage:
+        class: "ocs-storagecluster-ceph-rbd"
+        size: 5Gi
+  dependency-postgres:
+    postgres:
+      storage:
+        size: 5Gi
+        storageClassName: "ocs-storagecluster-ceph-rbd"
+  dependency-redis:
+    size: 3
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: "ocs-storagecluster-ceph-rbd"
+  dependency-mongodb:
+    storage:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: "ocs-storagecluster-ceph-rbd"
+    - metadata:
+        name: logs-volume
+      spec:
+        accessModes:
+        - ReadWriteMany
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: "ocs-storagecluster-cephfs"
+  dependency-db2:
+    db2instance:
+      installAsDefault: true
+      dbConfig:
+        LOGARCHMETH1: "DISK:/mnt/logs/archive"
+      nodes: 1
+      resources:
+        requests:
+          cpu: "6"
+          memory: "48Gi"
+        limits:
+          cpu: "6"
+          memory: "48Gi"
+      dbSettings:
+        encrypt: "YES"
+      storage:
+      - name: archivelogs
+        type: create
+        spec:
+          storageClassName: "ocs-storagecluster-cephfs"
+          accessModes:
+          - ReadWriteMany
+          resources:
+            requests:
+              storage: 50Gi
+      - name: meta
+        type: create
+        spec:
+          storageClassName: "ocs-storagecluster-cephfs"
+          accessModes:
+          - ReadWriteMany
+          resources:
+            requests:
+              storage: 30Gi
+      - name: data
+        type: template
+        spec:
+          storageClassName: "ocs-storagecluster-ceph-rbd"
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 200Gi
+      - name: tempts
+        type: template
+        spec:
+          storageClassName: "ocs-storagecluster-ceph-rbd"
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+      - name: activelogs
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+          storageClassName: "ocs-storagecluster-ceph-rbd"
+      partitionConfig:
+        total: 1
+      instance:
+        registry:
+          DB2_4K_DEVICE_SUPPORT: "ON"
+  mini-snif:
+    persistentVolumesClaims:
+      mini-snif-shared:
+        storageClassName: "ocs-storagecluster-cephfs"
+  universal-connector-manager:
+    persistentVolumesClaims:
+      universal-connector-manager-shared:
+        storageClassName: "ocs-storagecluster-cephfs"
+  settings-datasources:
+    persistentVolumesClaims:
+      settings-datasources:
+        storageClassName: "ocs-storagecluster-cephfs"
+  ticketing:
+    persistentVolumesClaims:
+      ticketing-keystore:
+        storageClassName: "ocs-storagecluster-cephfs"
