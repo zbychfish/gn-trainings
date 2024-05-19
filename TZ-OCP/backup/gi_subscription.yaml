@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-guardium-insights-operator-subscription
+spec:
+  channel: v3.3
+  installPlanApproval: Automatic
+  name: ibm-guardium-insights-operator
+  source: ibm-guardium-insights-operator-catalog
+  sourceNamespace: openshift-marketplace
