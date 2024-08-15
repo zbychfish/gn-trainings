@@ -53,60 +53,67 @@ def bill_suck(config: ConfigParser, user: str, database: str, verbose: bool):
     # print(currURL, fch, is_next)
     while is_next:
         page = requests.get(currURL)
+        # print(currURL)
         soup = BeautifulSoup(page.content, "html.parser")
         chart_div = soup.find("div", class_='chart-results')
-        tag_date = chart_div.find("p", class_='c-tagline').text.lstrip('Week of ')
-        chart_date = datetime.strptime(tag_date, '%B %d, %Y').date()
-        # print(chart_date)
-        if base_URL + chart_date.strftime('%Y-%m-%d') + '/' == base_URL + initial_date + '/':
-            pass
-        elif base_URL + chart_date.strftime('%Y-%m-%d') + '/' == currURL:
-            if chart_date >= date.today():
-                print("no more charts")
-                is_next = False
+        if chart_div is None:
+            print('Page does not provide chart:', currURL)
+            next_day = next_day + timedelta(days=1)
+            currURL = base_URL + next_day.strftime('%Y-%m-%d') + '/'
         else:
-            currURL = base_URL + chart_date.strftime('%Y-%m-%d') + '/'
-        print("Getting chart: {}".format(currURL))
-        #print(currURL, fch, is_next)
-        if fch:
-            if prevURL is None:
-                #execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, date(int(chart_date[0:4]), int(chart_date[4:6]), int(chart_date[6:8]))))
-                execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, chart_date))
+            tag_date = chart_div.find("p", class_='c-tagline').text.lstrip('Week of ')
+            chart_date = datetime.strptime(tag_date, '%B %d, %Y').date()
+            if base_URL + chart_date.strftime('%Y-%m-%d') + '/' == base_URL + initial_date + '/':
+                pass
+            elif base_URL + chart_date.strftime('%Y-%m-%d') + '/' == currURL:
+                if chart_date >= date.today():
+                    print("no more charts")
+                    is_next = False
             else:
-                execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, chart_date))
-                execute_sql(app_cursor, "UPDATE {}.charts SET next_chart='{}' WHERE url='{}'".format(schema, currURL, prevURL))
-        fch = True
-        execute_sql(app_cursor, "SELECT chart_id FROM {}.charts WHERE url='{}'".format(schema, currURL))
-        chart_id = app_cursor.fetchone()[0]
-        tag_songs = (chart_div.find('div', class_='chart-results-list'))
-        songs = tag_songs.find_all('ul', class_='o-chart-results-list-row')
-        for song in songs:
-            columns = song.find_all_next('li', class_='o-chart-results-list__item')
-            place = columns[0].findNext('span', class_='c-label').text.strip()
-            song_name = columns[3].findNext('h3', class_='c-title').text.strip().replace('"', "'")
-            performer = columns[3].findNext('span', class_='c-label').text.strip().replace('"', "'")
-            if '$' in performer:
-                if is_object(app_cursor, "SELECT COUNT(*) FROM {}.performers WHERE name='{}'".format(schema, performer)) == 0:
-                    execute_sql(app_cursor, "INSERT INTO {}.performers (name) VALUES ('{}') ON CONFLICT DO NOTHING".format(schema, performer))
-                execute_sql(app_cursor, "SELECT performer_id FROM {}.performers WHERE name='{}'".format(schema, performer))
-            else:
-                if is_object(app_cursor, "SELECT COUNT(*) FROM {}.performers WHERE name=$${}$$".format(schema, performer)) == 0:
-                    execute_sql(app_cursor, "INSERT INTO {}.performers (name) VALUES ($${}$$) ON CONFLICT DO NOTHING".format(schema, performer))
-                execute_sql(app_cursor, "SELECT performer_id FROM {}.performers WHERE name=$${}$$".format(schema, performer))
-            performer_id = app_cursor.fetchone()[0]
-            if '$' in song_name:
-                if is_object(app_cursor, "SELECT COUNT(*) FROM {}.songs WHERE name='{}' AND performer='{}'".format(schema, song_name, performer_id)) == 0:
-                    execute_sql(app_cursor, "INSERT INTO {}.songs (name, performer, seen_first_time) VALUES ('{}', '{}', '{}')".format(schema, song_name, performer_id, chart_date))
-                execute_sql(app_cursor, "SELECT song_id FROM {}.songs WHERE name='{}' AND performer='{}'".format(schema, song_name, performer_id))
-            else:
-                if is_object(app_cursor, "SELECT COUNT(*) FROM {}.songs WHERE name=$${}$$ AND performer='{}'".format(schema, song_name, performer_id)) == 0:
-                    execute_sql(app_cursor, "INSERT INTO {}.songs (name, performer, seen_first_time) VALUES ($${}$$, '{}', '{}')".format(schema, song_name, performer_id, chart_date))
-                execute_sql(app_cursor, "SELECT song_id FROM {}.songs WHERE name=$${}$$ AND performer='{}'".format(schema, song_name, performer_id))
-            song_id = app_cursor.fetchone()[0]
-            execute_sql(app_cursor, "INSERT INTO {}.positions VALUES('{}', {}, '{}') ON CONFLICT DO NOTHING".format(schema, chart_id, int(place), song_id))
-        next_day = chart_date + timedelta(days=1)
-        prevURL = currURL
-        currURL = base_URL + next_day.strftime('%Y-%m-%d') + '/'
+                currURL = base_URL + chart_date.strftime('%Y-%m-%d') + '/'
+            print("Getting chart: {}".format(currURL))
+            #print(currURL, fch, is_next)
+            if fch:
+                if prevURL is None:
+                    #execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, date(int(chart_date[0:4]), int(chart_date[4:6]), int(chart_date[6:8]))))
+                    execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, chart_date))
+                else:
+                    execute_sql(app_cursor, "INSERT INTO {}.charts (url, chart_issue) VALUES('{}', '{}')".format(schema, currURL, chart_date))
+                    execute_sql(app_cursor, "UPDATE {}.charts SET next_chart='{}' WHERE url='{}'".format(schema, currURL, prevURL))
+            fch = True
+            execute_sql(app_cursor, "SELECT chart_id FROM {}.charts WHERE url='{}'".format(schema, currURL))
+            chart_id = app_cursor.fetchone()[0]
+            tag_songs = (chart_div.find('div', class_='chart-results-list'))
+            songs = tag_songs.find_all('ul', class_='o-chart-results-list-row')
+            for song in songs:
+                columns = song.find_all_next('li', class_='o-chart-results-list__item')
+                place = columns[0].findNext('span', class_='c-label').text.strip()
+                song_name = columns[3].findNext('h3', class_='c-title').text.strip().replace('"', "'")
+                performer = columns[3].findNext('span', class_='c-label').text.strip().replace('"', "'")
+                #print(place)
+                if '$' in performer:
+                    if is_object(app_cursor, "SELECT COUNT(*) FROM {}.performers WHERE name='{}'".format(schema, performer)) == 0:
+                        execute_sql(app_cursor, "INSERT INTO {}.performers (name) VALUES ('{}') ON CONFLICT DO NOTHING".format(schema, performer))
+                    execute_sql(app_cursor, "SELECT performer_id FROM {}.performers WHERE name='{}'".format(schema, performer))
+                else:
+                    if is_object(app_cursor, "SELECT COUNT(*) FROM {}.performers WHERE name=$${}$$".format(schema, performer)) == 0:
+                        execute_sql(app_cursor, "INSERT INTO {}.performers (name) VALUES ($${}$$) ON CONFLICT DO NOTHING".format(schema, performer))
+                    execute_sql(app_cursor, "SELECT performer_id FROM {}.performers WHERE name=$${}$$".format(schema, performer))
+                performer_id = app_cursor.fetchone()[0]
+                if '$' in song_name:
+                    if is_object(app_cursor, "SELECT COUNT(*) FROM {}.songs WHERE name='{}' AND performer='{}'".format(schema, song_name, performer_id)) == 0:
+                        execute_sql(app_cursor, "INSERT INTO {}.songs (name, performer, seen_first_time) VALUES ('{}', '{}', '{}')".format(schema, song_name, performer_id, chart_date))
+                    execute_sql(app_cursor, "SELECT song_id FROM {}.songs WHERE name='{}' AND performer='{}'".format(schema, song_name, performer_id))
+                else:
+                    if is_object(app_cursor, "SELECT COUNT(*) FROM {}.songs WHERE name=$${}$$ AND performer='{}'".format(schema, song_name, performer_id)) == 0:
+                        execute_sql(app_cursor, "INSERT INTO {}.songs (name, performer, seen_first_time) VALUES ($${}$$, '{}', '{}')".format(schema, song_name, performer_id, chart_date))
+                    execute_sql(app_cursor, "SELECT song_id FROM {}.songs WHERE name=$${}$$ AND performer='{}'".format(schema, song_name, performer_id))
+                song_id = app_cursor.fetchone()[0]
+                execute_sql(app_cursor, "INSERT INTO {}.positions VALUES('{}', {}, '{}') ON CONFLICT DO NOTHING".format(schema, chart_id, int(place), song_id))
+            next_day = chart_date + timedelta(days=1)
+            #print(next_day)
+            prevURL = currURL
+            currURL = base_URL + next_day.strftime('%Y-%m-%d') + '/'
 
 
 def uk40(config: ConfigParser, user, database):
