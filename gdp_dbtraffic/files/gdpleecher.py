@@ -11,6 +11,7 @@ from files.gdpdefleecher import is_object, connect_to_postgres, get_cursor
 from random import randint
 from bs4 import BeautifulSoup, element
 from datetime import date, datetime, timedelta
+from time import sleep
 
 
 def execute_sql(cur: object, sql: str):
@@ -24,7 +25,14 @@ def execute_sql(cur: object, sql: str):
         exit(150)
 
 
-def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time, speed):
+def is_time_reached(loop_end_time, check_time=None):
+    check_time = datetime.now()
+    return True if check_time < loop_end_time else False
+
+
+def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time_execution, task_delay):
+    loop_end_time = datetime.now() + timedelta(minutes=time_execution)
+    current_task = 1
     if mode == 'normal':
         schema = database
         if config.get('db', 'type') == 'postgres':
@@ -40,19 +48,45 @@ def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, 
     else:
         print("Uknown traffic mode")
         exit(103)
-    task_type = randint(0, 0)
+    task_type = randint(0, 3)
+    start_date = date(1958, 8, 4)
     print(task_type)
-    if task_type == 0:
-        # get full chart based on date
-        start_date = date(1958, 8, 4)
-        random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
-        sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date, random_date + timedelta(days=6))
-        execute_sql(app_cursor, sql)
-        sql = ("SELECT po.position, s.name, pe.name FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
-               "WHERE c.chart_id = '{chart}' and po.chart = chart_id and s.song_id = po.song and pe.performer_id = s.performer").format(chart=app_cursor.fetchone()[0], schema=schema)
-        print(sql)
+    while is_time_reached(loop_end_time):
+        print("Task", current_task, end="\r", flush=True)
+        if task_type in [0, 1]:
+            # get random chart release
+            random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
+            sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date,
+                                                                                                  random_date + timedelta(
+                                                                                                      days=6))
+            execute_sql(app_cursor, sql)
+        if task_type in [2, 3]:
+            # get first and last chart in year
+            random_year = datetime.combine(start_date + timedelta(days=randint(0, date.today().year - start_date.year)*365), datetime.time(datetime.today())).year
+        if task_type == 0:
+            # get full chart based on date
+            sql = ("SELECT po.position, s.name, pe.name FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
+                   "WHERE c.chart_id = '{chart}' AND po.chart = chart_id AND s.song_id = po.song AND pe.performer_id = s.performer").format(chart=app_cursor.fetchone()[0], schema=schema)
+            execute_sql(app_cursor, sql)
+        elif task_type == 1:
+            # get only new songs from chart
+            sql = (
+                "SELECT po.position, s.name, pe.name, s.seen_first_time FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
+                "WHERE c.chart_id = '{chart}' AND po.chart = chart_id AND s.song_id = po.song AND pe.performer_id = s.performer AND c.chart_issue = s.seen_first_time").format(
+                chart=app_cursor.fetchone()[0], schema=schema)
+            execute_sql(app_cursor, sql)
+        elif task_type == 2:
+            # get chart list from random year
+            sql = "SELECT c.chart_id, c.url FROM {schema}.charts c WHERE date_part('year', c.chart_issue) = '{year}'".format(schema=schema, year=random_year)
+            execute_sql(app_cursor, sql)
+        elif task_type == 3:
+            # get only new songs in random year
+            sql = "SELECT s.name, s.seen_first_time FROM {schema}.songs s, {schema}.charts c WHERE date_part('year', s.seen_first_time) = '{year}' AND s.seen_first_time = c.chart_issue".format(schema=schema, year=random_year)
 
+        current_task += 1
+        sleep(task_delay)
 
+    app_cursor.close()
     app_conn[0].close()
 
 

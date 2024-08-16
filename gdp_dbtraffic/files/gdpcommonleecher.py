@@ -1,9 +1,10 @@
 from configparser import ConfigParser
 from files.gdpdefleecher import connect_to_postgres, cleanup_schema_postgres, deploy_schema_postgres
 from files.gdpleecher import bill_suck, bill_traffic, uk40
+from datetime import datetime
 
 
-def traffic(config: ConfigParser, database: str, verbose: bool, mode, time, speed):
+def traffic(config: ConfigParser, database: str, verbose: bool, mode, time: datetime, speed):
     print('Start traffic generation charts for', database) if verbose else ''
     if database == 'billboard':
         bill_traffic(config, config.get('settings', 'chart_user'), database, verbose, mode, time, speed)
