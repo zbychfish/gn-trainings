@@ -48,11 +48,10 @@ def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, 
     else:
         print("Uknown traffic mode")
         exit(103)
-    task_type = randint(0, 3)
     start_date = date(1958, 8, 4)
-    print(task_type)
     while is_time_reached(loop_end_time):
-        print("Task", current_task, end="\r", flush=True)
+        task_type = randint(0, 3)
+        print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
         if task_type in [0, 1]:
             # get random chart release
             random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
