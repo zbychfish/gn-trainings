@@ -10,9 +10,8 @@ from configparser import ConfigParser
 from files.gdpdefleecher import is_object, connect_to_postgres, get_cursor
 from random import randint
 from bs4 import BeautifulSoup, element
-
-
 from datetime import date, datetime, timedelta
+
 
 def execute_sql(cur: object, sql: str):
     try:
@@ -26,13 +25,45 @@ def execute_sql(cur: object, sql: str):
 
 
 def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time, speed):
-    pass
+    if mode == 'normal':
+        schema = database
+        if config.get('db', 'type') == 'postgres':
+            app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database)
+        else:
+            print('Unknown database type')
+            exit(102)
+        if app_conn[1] != 'OK':
+            print(app_conn[1])
+            exit(103)
+        app_cursor = get_cursor(app_conn[0], config)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    else:
+        print("Uknown traffic mode")
+        exit(103)
+    task_type = randint(0, 0)
+    print(task_type)
+    if task_type == 0:
+        # get full chart based on date
+        start_date = date(1958, 8, 4)
+        random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
+        sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date, random_date + timedelta(days=6))
+        execute_sql(app_cursor, sql)
+        sql = ("SELECT po.position, s.name, pe.name FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
+               "WHERE c.chart_id = '{chart}' and po.chart = chart_id and s.song_id = po.song and pe.performer_id = s.performer").format(chart=app_cursor.fetchone()[0], schema=schema)
+        print(sql)
+
+
+    app_conn[0].close()
 
 
 def bill_suck(config: ConfigParser, user: str, database: str, verbose: bool):
     #print(user, database)
     schema = database
-    app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database)
+    if config.get('db', 'type') == 'postgres':
+        app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database)
+    else:
+        print('Unknown database type')
+        exit(102)
     if app_conn[1] != 'OK':
         print(app_conn[1])
         exit(103)
@@ -114,6 +145,7 @@ def bill_suck(config: ConfigParser, user: str, database: str, verbose: bool):
             #print(next_day)
             prevURL = currURL
             currURL = base_URL + next_day.strftime('%Y-%m-%d') + '/'
+    app_conn[0].close()
 
 
 def uk40(config: ConfigParser, user, database):
