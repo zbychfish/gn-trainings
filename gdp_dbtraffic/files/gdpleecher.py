@@ -133,7 +133,7 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
             # get top n performers with the biggest number of songs in random year
             sql = ("SELECT COUNT(song_name) performer_songs_counter, performer FROM (SELECT DISTINCT(s.name) AS song_name, pe.name AS performer FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
                    "WHERE DATE_PART('year', c.chart_issue) = '{year}' AND c.chart_id = po.chart AND po.song = s.song_id AND s.performer = pe.performer_id GROUP BY pe.name, s.name ORDER BY pe.name) AS inner_query "
-                   "GROUP BY performer ORDER BY performer_songs_counter DESC {top}").format(schema=schema, top=randint(0, 10), year=random_year)
+                   "GROUP BY performer ORDER BY performer_songs_counter DESC LIMIT {top}").format(schema=schema, top=randint(0, 10), year=random_year)
         elif task_type == 16:
             # get song with the biggest number of weeks appearance in random year
             sql = ("SELECT DISTINCT(s.name), count(s.performer) AS weeks_on_charts, pe.name FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
