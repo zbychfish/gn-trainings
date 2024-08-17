@@ -30,7 +30,7 @@ def is_time_reached(loop_end_time, check_time=None):
     return True if check_time < loop_end_time else False
 
 
-def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time_execution, task_delay):
+def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time_execution, task_delay):
     loop_end_time = datetime.now() + timedelta(minutes=time_execution)
     current_task = 1
     if mode == 'normal':
@@ -50,17 +50,19 @@ def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, 
         exit(103)
     start_date = date(1958, 8, 4)
     while is_time_reached(loop_end_time):
-        task_type = randint(0, 3)
-        print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
+        task_type = randint(0, 5)
+        random_date = None
+        random_year = None
+        sql = None
+        if verbose:
+            print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
         if task_type in [0, 1]:
             # get random chart release
             random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
-            sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date,
-                                                                                                  random_date + timedelta(
-                                                                                                      days=6))
+            sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date, random_date + timedelta(days=6))
             execute_sql(app_cursor, sql)
-        if task_type in [2, 3]:
-            # get first and last chart in year
+        if task_type in [2, 3, 4, 5]:
+            # get random year
             random_year = datetime.combine(start_date + timedelta(days=randint(0, date.today().year - start_date.year)*365), datetime.time(datetime.today())).year
         if task_type == 0:
             # get full chart based on date
@@ -73,15 +75,29 @@ def bill_traffic(config: ConfigParser, user: str, database: str, verbose: bool, 
                 "SELECT po.position, s.name, pe.name, s.seen_first_time FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
                 "WHERE c.chart_id = '{chart}' AND po.chart = chart_id AND s.song_id = po.song AND pe.performer_id = s.performer AND c.chart_issue = s.seen_first_time").format(
                 chart=app_cursor.fetchone()[0], schema=schema)
-            execute_sql(app_cursor, sql)
         elif task_type == 2:
             # get chart list from random year
             sql = "SELECT c.chart_id, c.url FROM {schema}.charts c WHERE date_part('year', c.chart_issue) = '{year}'".format(schema=schema, year=random_year)
-            execute_sql(app_cursor, sql)
         elif task_type == 3:
             # get only new songs in random year
             sql = "SELECT s.name, s.seen_first_time FROM {schema}.songs s, {schema}.charts c WHERE date_part('year', s.seen_first_time) = '{year}' AND s.seen_first_time = c.chart_issue".format(schema=schema, year=random_year)
-
+        elif task_type == 4:
+            # get performers list with new songs in random year
+            sql = ("SELECT DISTINCT(pe.name) FROM {schema}.songs s, {schema}.charts c, {schema}.performers pe WHERE "
+                   "DATE_PART('year', s.seen_first_time) = '{year}' AND s.seen_first_time = c.chart_issue AND s.performer = pe.performer_id").format(schema=schema, year=random_year)
+        elif task_type == 5:
+            # get all first positioned songs in random year
+            sql = ("SELECT DISTINCT(s.name) FROM {schema}.positions po, {schema}.charts c, {schema}.songs s WHERE "
+                   "DATE_PART('year', c.chart_issue) = '{year}' AND po.chart = c.chart_id AND po.position = 1 AND po.song = s.song_id").format(schema=schema, year=random_year)
+        elif task_type == 100:
+            # get
+            sql = ""
+            pass
+        else:
+            # error
+            print("Incorrect task type")
+            exit(103)
+        execute_sql(app_cursor, sql)
         current_task += 1
         sleep(task_delay)
 

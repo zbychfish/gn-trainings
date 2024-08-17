@@ -15,10 +15,6 @@ except ImportError:
     exit(101)
 
 
-def task_timeout():
-    pass
-
-
 # checks connection to postgres database
 def connect_to_postgres(config: ConfigParser, user: str, password: str, database: str) -> [object, str]:
     try:
