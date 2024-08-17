@@ -50,19 +50,19 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
         exit(103)
     start_date = date(1958, 8, 4)
     while is_time_reached(loop_end_time):
-        task_type = randint(0, 13)
+        task_type = randint(0, 17)
         random_date = None
         random_year = None
         random_performer = None
         sql = None
         if verbose:
             print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
-        if task_type in [0, 1]:
+        if task_type in [0, 1, 17]:
             # get random chart release
             random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
             sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date, random_date + timedelta(days=6))
             execute_sql(app_cursor, sql)
-        if task_type in [2, 3, 4, 5, 6, 11, 13]:
+        if task_type in [2, 3, 4, 5, 6, 11, 13, 15, 16]:
             # get random year
             random_year = datetime.combine(start_date + timedelta(days=randint(0, date.today().year - start_date.year)*365), datetime.time(datetime.today())).year
         if task_type in [7, 8, 9]:
@@ -125,6 +125,43 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
             # get song/s with the highest number n-th position in random year
             sql = ("SELECT COUNT(po.song) AS weeks_on_top, s.name AS song_name from {schema}.positions po, {schema}.songs s, {schema}.charts c "
                    "WHERE po.song = s.song_id AND po.position = {position} AND po.chart = c.chart_id AND DATE_PART('year', c.chart_issue) = '{year}' GROUP BY po.song, song_name ORDER BY weeks_on_top DESC LIMIT 1").format(schema=schema, year=random_year, position = randint(1, 5))
+        elif task_type == 14:
+            # get top n performers with the biggest number of songs ever
+            sql = ("SELECT COUNT(s.song_id) count_of_songs_by_performer, s.performer, pe.name FROM {schema}.songs s, {schema}.performers pe "
+                   "WHERE s.performer = pe.performer_id GROUP BY s.performer, pe.name  ORDER BY count_of_songs_by_performer DESC LIMIT {top}").format(schema=schema, top=randint(0, 10))
+        elif task_type == 15:
+            # get top n performers with the biggest number of songs in random year
+            sql = ("SELECT COUNT(song_name) performer_songs_counter, performer FROM (SELECT DISTINCT(s.name) AS song_name, pe.name AS performer FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
+                   "WHERE DATE_PART('year', c.chart_issue) = '{year}' AND c.chart_id = po.chart AND po.song = s.song_id AND s.performer = pe.performer_id GROUP BY pe.name, s.name ORDER BY pe.name) AS inner_query "
+                   "GROUP BY performer ORDER BY performer_songs_counter DESC {top}").format(schema=schema, top=randint(0, 10), year=random_year)
+        elif task_type == 16:
+            # get song with the biggest number of weeks appearance in random year
+            sql = ("SELECT DISTINCT(s.name), count(s.performer) AS weeks_on_charts, pe.name FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
+                   "WHERE DATE_PART('year', c.chart_issue) = '{year}' AND c.chart_id = po.chart AND po.song = s.song_id AND s.performer = pe.performer_id "
+                   "GROUP BY s.name, s.performer, pe.name ORDER BY weeks_on_charts DESC LIMIT 1").format(schema=schema, year=random_year)
+        elif task_type == 17:
+            # get full random chart
+            sql = ("SELECT po.position, pe.name, s.name, c.url FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
+                   "WHERE chart_id = '{cursor}' AND c.chart_id = po.chart AND po.song = s.song_id AND s.performer = pe.performer_id").format(schema=schema, cursor=app_cursor.fetchone()[0])
+
+        # get only new songs from chart - 1
+        # get chart list from random year - 2
+        # get only new songs in random year - 3
+        # get performers list with new songs in random year - 4
+        # get all first positioned songs in random year - 5
+        # get top 10 songs in each chart from random year - 6
+        # get all songs of random performer - 7
+        # get best position of all songs of random performer - 8
+        # get count of songs of random performer - 9
+        # get song with the longest appearance ever - 10
+        # get song with the longest appearance in random year - 11
+        # get song/s with the highest number of n-th position ever - 12
+        # get song/s with the highest number n-th position in random year - 13
+        # get top n performers with the biggest number of songs ever - 14
+        # get top n performers with the biggest number of songs in random year
+        # get song with the biggest number of weeks appearance in random year - 16
+        # get full random chart - 17
+
         elif task_type == 100:
             # get best position of all songs of random performer
             sql = ""
