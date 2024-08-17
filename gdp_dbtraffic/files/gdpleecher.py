@@ -56,7 +56,7 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
         random_performer = None
         sql = None
         if verbose:
-            print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
+            print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), ' ', end="\r", flush=True)
         if task_type in [0, 1, 17]:
             # get random chart release
             random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
