@@ -50,9 +50,10 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
         exit(103)
     start_date = date(1958, 8, 4)
     while is_time_reached(loop_end_time):
-        task_type = randint(0, 5)
+        task_type = randint(0, 13)
         random_date = None
         random_year = None
+        random_performer = None
         sql = None
         if verbose:
             print("Current task type {},".format(task_type), "number executed tasks: {}".format(current_task), end="\r", flush=True)
@@ -61,9 +62,15 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
             random_date = start_date + timedelta(days=randint(0, int((date.today() - start_date).days)))
             sql = "SELECT chart_id FROM {}.charts WHERE chart_issue BETWEEN '{}' AND '{}'".format(schema, random_date, random_date + timedelta(days=6))
             execute_sql(app_cursor, sql)
-        if task_type in [2, 3, 4, 5]:
+        if task_type in [2, 3, 4, 5, 6, 11, 13]:
             # get random year
             random_year = datetime.combine(start_date + timedelta(days=randint(0, date.today().year - start_date.year)*365), datetime.time(datetime.today())).year
+        if task_type in [7, 8, 9]:
+            # get random performer
+            sql = "SELECT performer_id FROM {}.performers ORDER BY RANDOM() LIMIT 1".format(schema)
+            execute_sql(app_cursor, sql)
+            random_performer = app_cursor.fetchone()[0]
+        sql = None
         if task_type == 0:
             # get full chart based on date
             sql = ("SELECT po.position, s.name, pe.name FROM {schema}.charts c, {schema}.positions po, {schema}.songs s, {schema}.performers pe "
@@ -89,10 +96,38 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
             # get all first positioned songs in random year
             sql = ("SELECT DISTINCT(s.name) FROM {schema}.positions po, {schema}.charts c, {schema}.songs s WHERE "
                    "DATE_PART('year', c.chart_issue) = '{year}' AND po.chart = c.chart_id AND po.position = 1 AND po.song = s.song_id").format(schema=schema, year=random_year)
+        elif task_type == 6:
+            # get top 10 songs in each chart from random year
+            sql = ("SELECT DISTINCT(s.name) FROM {schema}.positions po, {schema}.charts c, {schema}.songs s WHERE "
+                   "DATE_PART('year', c.chart_issue) = '{year}' AND po.chart = c.chart_id AND po.position < 11 AND po.song = s.song_id").format(schema=schema, year=random_year)
+        elif task_type == 7:
+            # get all songs of random performer
+            sql = "SELECT s.name, pe.name, s.seen_first_time FROM {schema}.songs s, {schema}.performers pe WHERE pe.performer_id = '{performer}' AND pe.performer_id = s.performer".format(schema=schema, performer=random_performer)
+        elif task_type == 8:
+            # get best position of all songs of random performer
+            sql = ("SELECT s.name AS song_name, MAX(po.position) AS best_position, pe.name  FROM {schema}.songs s, {schema}.performers pe, {schema}.positions po WHERE "
+                   "pe.performer_id = '{performer}' AND pe.performer_id = s.performer AND po.song = s.song_id GROUP BY song_name, pe.name ORDER BY best_position").format(schema=schema, performer=random_performer)
+        elif task_type == 9:
+            # get count of songs of random performer
+            sql = "SELECT COUNT(s.name) FROM {schema}.songs s, {schema}.performers pe WHERE pe.performer_id = '{performer}' AND pe.performer_id = s.performer".format(schema=schema, performer=random_performer)
+        elif task_type == 10:
+            # get song with the longest appearance ever
+            sql = "SELECT COUNT(po.song) AS weeks_appearance, s.name AS song_name FROM {schema}.positions po, {schema}.songs s WHERE po.song = s.song_id GROUP BY po.song, song_name ORDER BY weeks_appearance DESC LIMIT 1".format(schema=schema)
+        elif task_type == 11:
+            # get song with the longest appearance in random year
+            sql = ("SELECT COUNT(po.song) AS weeks_appearance, s.name AS song_name, s.song_id FROM {schema}.positions po, {schema}.songs s, {schema}.charts c "
+                   "WHERE DATE_PART('year', c.chart_issue) = '{year}' AND po.chart = c.chart_id AND po.song = s.song_id GROUP BY po.song, song_name, s.song_id ORDER BY weeks_appearance DESC LIMIT 1").format(schema=schema, year=random_year)
+        elif task_type == 12:
+            # get song/s with the highest number of n-th position ever
+            sql = ("SELECT COUNT(po.song) AS weeks_on_top, s.name AS song_name from {schema}.positions po, {schema}.songs s "
+                   "WHERE po.song = s.song_id AND po.position = {position} GROUP BY po.song, song_name ORDER BY weeks_on_top DESC LIMIT 1").format(schema=schema, position = randint(1, 5))
+        elif task_type == 13:
+            # get song/s with the highest number n-th position in random year
+            sql = ("SELECT COUNT(po.song) AS weeks_on_top, s.name AS song_name from {schema}.positions po, {schema}.songs s, {schema}.charts c "
+                   "WHERE po.song = s.song_id AND po.position = {position} AND po.chart = c.chart_id AND DATE_PART('year', c.chart_issue) = '{year}' GROUP BY po.song, song_name ORDER BY weeks_on_top DESC LIMIT 1").format(schema=schema, year=random_year, position = randint(1, 5))
         elif task_type == 100:
-            # get
+            # get best position of all songs of random performer
             sql = ""
-            pass
         else:
             # error
             print("Incorrect task type")
