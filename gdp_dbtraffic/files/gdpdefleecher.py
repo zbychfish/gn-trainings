@@ -16,14 +16,15 @@ except ImportError:
 
 
 # checks connection to postgres database
-def connect_to_postgres(config: ConfigParser, user: str, password: str, database: str) -> [object, str]:
+def connect_to_postgres(config: ConfigParser, user: str, password: str, database: str, app_name) -> [object, str]:
     try:
-        conn = psycopg2.connect("host={} port={} dbname={} user={} password={}".format(
+        conn = psycopg2.connect("host={} port={} dbname={} user={} password={} application_name={}".format(
             config.get('db', 'host'),
             config.get('db', 'port'),
             database,
             user,
-            password
+            password,
+            app_name
         ))
         conn.autocommit = True
         error = "OK"

@@ -33,10 +33,10 @@ def is_time_reached(loop_end_time, check_time=None):
 def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool, mode, time_execution, task_delay):
     loop_end_time = datetime.now() + timedelta(minutes=time_execution)
     current_task = 1
-    if mode == 'normal':
+    if mode in ['normal']:
         schema = database
         if config.get('db', 'type') == 'postgres':
-            app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database)
+            app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database, schema+'_app')
         else:
             print('Unknown database type')
             exit(102)
@@ -50,7 +50,7 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
         exit(103)
     start_date = date(1958, 8, 4)
     while is_time_reached(loop_end_time):
-        task_type = randint(0, 17)
+        task_type = randint(0, 18)
         random_date = None
         random_year = None
         random_performer = None
@@ -143,7 +143,14 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
             # get full random chart
             sql = ("SELECT po.position, pe.name, s.name, c.url FROM {schema}.positions po, {schema}.charts c, {schema}.songs s, {schema}.performers pe "
                    "WHERE chart_id = '{cursor}' AND c.chart_id = po.chart AND po.song = s.song_id AND s.performer = pe.performer_id").format(schema=schema, cursor=app_cursor.fetchone()[0])
-
+        elif task_type == 18:
+            if mode == 'app_extended':
+                # new app constructs
+                sql = ("SELECT (SELECT COUNT(*) AS number_of_charts FROM {schema}.charts), (SELECT COUNT(*)  AS number_of_artists FROM {schema}.performers),"
+                       " (SELECT COUNT(*) AS number_of_songs FROM {schema}.songs)").format(schema=schema)
+            else:
+                # get latest chart date
+                sql = "SELECT chart_issue FROM {}.charts ORDER BY chart_issue DESC LIMIT 1".format(schema)
         # get only new songs from chart - 1
         # get chart list from random year - 2
         # get only new songs in random year - 3
@@ -161,6 +168,7 @@ def chart_traffic(config: ConfigParser, user: str, database: str, verbose: bool,
         # get top n performers with the biggest number of songs in random year
         # get song with the biggest number of weeks appearance in random year - 16
         # get full random chart - 17
+        # new app constructs or get date of the latest chart - 18 (app_extended - 1)
 
         elif task_type == 100:
             # get best position of all songs of random performer
@@ -181,7 +189,7 @@ def bill_suck(config: ConfigParser, user: str, database: str, verbose: bool):
     #print(user, database)
     schema = database
     if config.get('db', 'type') == 'postgres':
-        app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database)
+        app_conn = connect_to_postgres(config, user, config.get('settings', 'chart_user_password'), database, schema+'_app')
     else:
         print('Unknown database type')
         exit(102)

@@ -22,10 +22,10 @@ def suck(config: ConfigParser, database: str, verbose: bool):
         print("Unknown chart provider:", database)
 
 
-def connect_to_database(config: ConfigParser, user: str, password: str, database: str) -> [object, str]:
+def connect_to_database(config: ConfigParser, user: str, password: str, database: str, app_name: str) -> [object, str]:
     supported_databases=['postgres']
     if config.get('db', 'type') in supported_databases:
-        return connect_to_postgres(config, user, password, database)
+        return connect_to_postgres(config, user, password, database, app_name)
 
 
 def clean_schema(conn: object, config: ConfigParser, database: str):
