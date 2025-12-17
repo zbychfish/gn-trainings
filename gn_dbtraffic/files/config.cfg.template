@@ -1,0 +1,27 @@
+
+[db]
+type = oracle
+host =
+port =
+database = ORCLPDB1
+user = system
+password =
+
+
+[settings]
+language = pl_PL
+db_admins = johnson,anna,jolanta,ina,genowefa,marco,antonio,jorge,danuta,zibi,ander
+app_users = app1,app2,app3
+default_password =
+minimal_customer_count = 10
+birth_start = 1950,1,1
+birth_end = 2005,12,31
+processing_speed = normal
+maximum_steps_in_session = 50
+
+[game_addons]
+feature_descriptions = 150 Gems bonus,300 Gems bonus,500 Gems bonus,750 Gems bonus,1000 Gems bonus,Double XP for 1 hour,Double XP for 2 hours,Double XP for 4 hours,Instant cooldown for 1 spell,Instant cooldown for 2 spells,Instant cooldown for all spells,Premium Battle Pass access,Elite Skin Pack: ''Dragon Slayer'',Exclusive Pet: ''Mini Golem'',Boost: +5%% Gold drop for 24h,Boost: +10%% Gold drop for 24h,Boost: +15%% Gold drop for 24h,Boost: +5%% Item drop for 24h,Boost: +10%% Item drop for 24h,Boost: +15%% Item drop for 24h,Additional inventory slot (permanent),Additional 2 inventory slots (permanent),Additional 3 inventory slots (permanent),Unlock ''Shadow'' character class,Unlock ''Alchemist'' character class,Unique Avatar Frame: ''Mystic Aura'',Unique Profile Background: ''Cosmic Dust'',5x Minor Health Potion,10x Minor Health Potion,5x Major Mana Potion,10x Major Mana Potion,Skip 1 level up timer,Skip 2 level up timers,Skip 5 level up timers,Crafting speed +25%% for 12h,Crafting speed +50%% for 12h,Resource pack: Wood (Small),Resource pack: Stone (Medium),Resource pack: Iron (Large),Daily Login Bonus multiplier x2 for 3 days,Daily Login Bonus multiplier x3 for 3 days,Rename character token,Guild creation discount (50%%),Fast travel discount (24h),Limited-edition Emote Pack,Enchanted pickaxe (temporary),Legendary fishing rod (temporary),Resurrection Orb (single use),Auto-loot for 30 minutes,Increased critical hit chance for 1 battle
+feature_prices = 3,6,9,12,15,5,9,14,2,4,8,15,12,10,4,7,11,5,9,13,6,10,14,15,15,8,7,1,2, 3,5,4,7,12,6,10,2,5,9,8,13,7,10,5,9,6,8,15,11,3
+extra_descriptions = three additional moves,five additional moves,bronze treasure chest,silver treasure chest,gold treasure chest
+extra_prices = 4,8,2,4,8
+new_constructs = 1
