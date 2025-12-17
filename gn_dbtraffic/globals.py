@@ -1,0 +1,5 @@
+GAMES_SCHEMA = 'game'
+GAMES_APP_GROUP = 'appusers'
+GAMES_ADMIN_GROUP = 'adminusers'
+
+MAX_TASK_IN_ADMIN_SESSION = 100
